@@ -17,14 +17,31 @@ html {
 }
 
 body {
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 50% -10%, rgba(199, 167, 104, 0.08), transparent 30rem),
-    linear-gradient(180deg, #080b10 0%, #0d1117 48%, #080b10 100%);
+  background: transparent;
   color: #e8edf2;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      28rem 12rem at clamp(7rem, calc((100vw - 80rem) / 2 + 8rem), 18rem) 2.75rem,
+      rgba(211, 130, 50, 0.24),
+      rgba(115, 49, 34, 0.08) 48%,
+      transparent 78%
+    ),
+    linear-gradient(180deg, rgba(196, 116, 48, 0.025) 0%, transparent 18%, transparent 100%),
+    linear-gradient(180deg, #080b10 0%, #0d1117 48%, #080b10 100%);
 }
 
 button,
