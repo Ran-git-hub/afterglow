@@ -21,7 +21,8 @@ type VisualMemoryRow = {
 const moodTags: MoodTag[] = ["joyful", "somber", "chaotic", "serene", "uncertain"];
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const supabasePublishableKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const storageBucket = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET;
 
 const supabase =
@@ -35,7 +36,9 @@ export async function fetchDailySetsFromSupabase(): Promise<DailySet[] | null> {
   const { data, error } = await supabase
     .from("visual_memory")
     .select("*")
-    .order("timestamp", { ascending: false })
+    .eq("published", true)
+    .order("run_date", { ascending: false })
+    .order("rank", { ascending: true })
     .limit(90);
 
   if (error || !data?.length) {

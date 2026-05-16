@@ -34,6 +34,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET=
 ```
 
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` is also supported as a fallback key name for Vercel's Supabase integration.
+
 `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` is only needed when `visual_memory.image_path` stores a Supabase Storage object path instead of a full public image URL.
 
 ## Current state

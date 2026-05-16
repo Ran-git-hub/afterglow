@@ -35,7 +35,7 @@ body::before {
   pointer-events: none;
   background:
     radial-gradient(
-      28rem 12rem at clamp(7rem, calc((100vw - 80rem) / 2 + 8rem), 18rem) 2.75rem,
+      28rem 12rem at max(6.5rem, calc((100vw - 80rem) / 2 + 5.75rem)) 2.75rem,
       rgba(211, 130, 50, 0.24),
       rgba(115, 49, 34, 0.08) 48%,
       transparent 78%
