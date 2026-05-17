@@ -28,6 +28,8 @@ const storageBucket = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET;
 const supabase =
   supabaseUrl && supabasePublishableKey ? createClient(supabaseUrl, supabasePublishableKey) : null;
 
+export const hasSupabaseConfig = Boolean(supabase);
+
 export async function fetchDailySetsFromSupabase(): Promise<DailySet[] | null> {
   if (!supabase) {
     return null;

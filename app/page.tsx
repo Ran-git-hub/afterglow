@@ -3,15 +3,16 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { dailySets } from "@/lib/mockData";
-import { fetchDailySetsFromSupabase } from "@/lib/supabaseData";
+import { fetchDailySetsFromSupabase, hasSupabaseConfig } from "@/lib/supabaseData";
 
 export default function Home() {
-  const [availableDailySets, setAvailableDailySets] = useState(dailySets);
-  const [selectedDate, setSelectedDate] = useState(dailySets[0]?.runDate ?? "");
+  const [availableDailySets, setAvailableDailySets] = useState(hasSupabaseConfig ? [] : dailySets);
+  const [selectedDate, setSelectedDate] = useState(hasSupabaseConfig ? "" : dailySets[0]?.runDate ?? "");
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [hasSlideTransition, setHasSlideTransition] = useState(true);
+  const [isLoadingDailySets, setIsLoadingDailySets] = useState(hasSupabaseConfig);
   const touchStartX = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
   const imageFrameRef = useRef<HTMLDivElement | null>(null);
@@ -22,7 +23,7 @@ export default function Home() {
     return availableDailySets.find((set) => set.runDate === selectedDate) ?? availableDailySets[0];
   }, [availableDailySets, selectedDate]);
 
-  const memories = useMemo(() => selectedSet.memories.slice(0, 3), [selectedSet]);
+  const memories = useMemo(() => selectedSet?.memories.slice(0, 3) ?? [], [selectedSet]);
   const activeMemory = memories[activeIndex] ?? memories[0];
   const previousMemory = memories[(activeIndex - 1 + memories.length) % memories.length];
   const nextMemory = memories[(activeIndex + 1) % memories.length];
@@ -32,13 +33,15 @@ export default function Home() {
     let isMounted = true;
 
     fetchDailySetsFromSupabase().then((supabaseDailySets) => {
-      if (!isMounted || !supabaseDailySets?.length) {
+      if (!isMounted) {
         return;
       }
 
-      setAvailableDailySets(supabaseDailySets);
-      setSelectedDate(supabaseDailySets[0]?.runDate ?? "");
+      const nextDailySets = supabaseDailySets?.length ? supabaseDailySets : dailySets;
+      setAvailableDailySets(nextDailySets);
+      setSelectedDate(nextDailySets[0]?.runDate ?? "");
       setActiveIndex(0);
+      setIsLoadingDailySets(false);
     });
 
     return () => {
@@ -106,6 +109,10 @@ export default function Home() {
   }
 
   function slideToImage(direction: -1 | 1) {
+    if (memories.length < 2) {
+      return;
+    }
+
     if (slideTimeoutRef.current) {
       return;
     }
@@ -212,6 +219,10 @@ export default function Home() {
   }
 
   if (!activeMemory) {
+    if (isLoadingDailySets) {
+      return <LoadingPage />;
+    }
+
     return (
       <main className="grid min-h-screen place-items-center px-6 text-center">
         <div>
@@ -225,15 +236,15 @@ export default function Home() {
   return (
     <main className="min-h-screen px-5 py-6 text-slate-100 sm:px-8 lg:px-10">
       <section className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col">
-        <header className="flex flex-col gap-5">
+        <header className="flex flex-col gap-7 sm:gap-8">
           <div>
             <h1 className="font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
               Afterglow
             </h1>
-            <p className="mt-1 text-sm text-dim">What remains after the world is seen</p>
+            <p className="mt-2 text-sm text-dim">What remains after the world is seen</p>
           </div>
 
-          <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+          <div className="mx-auto grid w-full max-w-5xl grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
             <button
               aria-label="Previous date"
               className="grid h-10 place-items-center border border-white/10 bg-white/[0.03] font-mono text-lg text-mist transition hover:border-ember/40 hover:text-slate-100 disabled:cursor-default disabled:opacity-25 disabled:hover:border-white/10 disabled:hover:text-mist"
@@ -309,7 +320,7 @@ export default function Home() {
 
             <button
               aria-label="Previous image"
-              className="absolute left-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/25 font-mono text-xl text-white/75 backdrop-blur-md transition hover:scale-105 hover:border-white/35 hover:bg-black/50 hover:text-white sm:left-8 sm:h-14 sm:w-14 sm:text-3xl sm:shadow-glow lg:left-16"
+              className="absolute left-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#0b0d12]/85 font-mono text-xl text-white/75 shadow-glow transition hover:scale-105 hover:border-white/35 hover:bg-[#11141a] hover:text-white sm:left-8 sm:h-14 sm:w-14 sm:text-3xl lg:left-16 lg:opacity-55 lg:hover:opacity-100"
               type="button"
               onClick={showPrevious}
             >
@@ -347,7 +358,7 @@ export default function Home() {
 
             <button
               aria-label="Next image"
-              className="absolute right-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/25 font-mono text-xl text-white/75 backdrop-blur-md transition hover:scale-105 hover:border-white/35 hover:bg-black/50 hover:text-white sm:right-8 sm:h-14 sm:w-14 sm:text-3xl sm:shadow-glow lg:right-16"
+              className="absolute right-2 top-1/2 z-10 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-[#0b0d12]/85 font-mono text-xl text-white/75 shadow-glow transition hover:scale-105 hover:border-white/35 hover:bg-[#11141a] hover:text-white sm:right-8 sm:h-14 sm:w-14 sm:text-3xl lg:right-16 lg:opacity-55 lg:hover:opacity-100"
               type="button"
               onClick={showNext}
             >
@@ -365,12 +376,12 @@ export default function Home() {
               </h2>
             </div>
 
-            <div className="lg:pt-1">
-              <p className="text-pretty text-base leading-8 text-mist sm:text-lg lg:text-xl lg:leading-9">
+            <div className="max-w-[43rem] lg:pt-1">
+              <p className="text-pretty text-base leading-8 text-mist sm:text-lg lg:text-[1.18rem] lg:leading-9">
                 {activeMemory.visualDescription}
               </p>
               {activeMemory.feelingTags ? (
-                <p className="mt-5 font-mono text-xs uppercase tracking-[0.12em] text-ember/80">
+                <p className="mt-6 border-t border-white/10 pt-4 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-ember/75">
                   {activeMemory.feelingTags}
                 </p>
               ) : null}
@@ -405,6 +416,59 @@ export default function Home() {
             © 2026 Afterglow. All rights reserved.
           </p>
         </footer>
+      </section>
+    </main>
+  );
+}
+
+function LoadingPage() {
+  return (
+    <main className="min-h-screen px-5 py-6 text-slate-100 sm:px-8 lg:px-10" aria-busy="true">
+      <section className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col">
+        <header className="flex flex-col gap-7 sm:gap-8">
+          <div>
+            <h1 className="font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
+              Afterglow
+            </h1>
+            <p className="mt-2 text-sm text-dim">What remains after the world is seen</p>
+          </div>
+
+          <div className="mx-auto grid w-full max-w-5xl grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+            <div className="h-10 border border-white/10 bg-white/[0.03]" />
+            <div className="flex gap-2">
+              <div className="h-10 w-28 border border-ember/30 bg-ember/[0.08]" />
+              <div className="h-10 w-28 border border-white/10 bg-white/[0.03]" />
+            </div>
+            <div className="h-10 border border-white/10 bg-white/[0.03]" />
+          </div>
+        </header>
+
+        <div className="flex flex-1 flex-col justify-center py-8 sm:py-10">
+          <div className="relative overflow-hidden px-6 sm:px-12">
+            <div className="mx-auto max-w-5xl">
+              <div className="relative aspect-[16/10] overflow-hidden rounded-md border border-white/10 bg-slate-950/70 lg:aspect-[16/9]">
+                <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/[0.06] via-white/[0.025] to-transparent" />
+              </div>
+            </div>
+          </div>
+
+          <div className="relative mx-auto mt-7 grid min-h-[25rem] w-full max-w-6xl content-start gap-6 sm:min-h-[21rem] lg:h-[22rem] lg:grid-cols-[0.9fr_1.4fr] lg:items-start lg:overflow-hidden">
+            <div>
+              <div className="h-4 w-16 bg-ember/25" />
+              <div className="mt-5 h-12 w-4/5 max-w-md bg-white/[0.08]" />
+              <div className="mt-3 h-12 w-2/3 max-w-sm bg-white/[0.06]" />
+            </div>
+
+            <div className="max-w-[43rem] lg:pt-1">
+              <div className="h-5 w-full bg-white/[0.07]" />
+              <div className="mt-4 h-5 w-11/12 bg-white/[0.06]" />
+              <div className="mt-4 h-5 w-4/5 bg-white/[0.05]" />
+              <div className="mt-6 border-t border-white/10 pt-4">
+                <div className="h-3 w-2/5 bg-ember/20" />
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </main>
   );
