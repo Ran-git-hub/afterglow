@@ -23,7 +23,7 @@ body {
   margin: 0;
   background: transparent;
   color: #e8edf2;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   letter-spacing: 0;
 }
 
@@ -75,9 +75,147 @@ button {
   width: min(100%, 64rem);
 }
 
+.memory-title {
+  font-size: 1.875rem;
+  line-height: 1.18;
+}
+
+.memory-description {
+  font-size: 1rem;
+  line-height: 2rem;
+}
+
+@media (min-width: 640px) {
+  .memory-title {
+    font-size: 2.25rem;
+  }
+
+  .memory-description {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .side-preview {
+    width: 20rem;
+  }
+
+  .memory-copy {
+    min-height: 22rem;
+  }
+
+  .memory-title {
+    font-size: 3rem;
+    line-height: 1;
+  }
+
+  .memory-description {
+    font-size: 1.18rem;
+    line-height: 2.25rem;
+  }
+
+  .image-position {
+    top: 21rem;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 1280px) {
+  .site-header {
+    gap: 1.15rem;
+  }
+
+  .memory-stage {
+    justify-content: flex-start;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .gallery-row {
+    padding-inline: 4rem;
+  }
+
+  .viewer-width {
+    width: min(100%, 72rem, calc(58vh * 16 / 9));
+  }
+
+  .side-preview {
+    width: 14rem;
+    opacity: 0.18;
+  }
+
+  .memory-copy {
+    margin-top: 1rem;
+    min-height: 12rem;
+    gap: 1.5rem;
+  }
+
+  .memory-title {
+    font-size: 1.62rem;
+    line-height: 1.08;
+  }
+
+  .memory-description {
+    overflow: hidden;
+    font-size: 1.02rem;
+    line-height: 1.75rem;
+  }
+
+  .memory-description:not(.is-expanded) {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+
+  .memory-description.is-expanded {
+    overflow: visible;
+  }
+
+  .memory-meta {
+    margin-top: 0.85rem;
+    padding-top: 0.75rem;
+    font-size: 0.72rem;
+    line-height: 1.2rem;
+  }
+
+  .image-position {
+    top: 11.5rem;
+  }
+}
+
 @media (min-width: 1024px) and (max-height: 1120px) {
   .viewer-width {
-    width: min(100%, 64rem, max(42rem, calc((100vh - 30rem) * 16 / 9)));
+    width: min(100%, 70rem, calc(54vh * 16 / 9));
+  }
+
+  .memory-title {
+    font-size: 1.5rem;
+  }
+
+  .memory-description {
+    font-size: 0.98rem;
+    line-height: 1.65rem;
+  }
+
+  .memory-description:not(.is-expanded) {
+    -webkit-line-clamp: 2;
+  }
+
+  .side-preview {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) and (max-height: 960px) {
+  .viewer-width {
+    width: min(100%, 68rem, calc(50vh * 16 / 9));
+  }
+
+  .memory-copy {
+    min-height: 10rem;
+  }
+
+  .image-position {
+    top: 9.5rem;
   }
 }
 

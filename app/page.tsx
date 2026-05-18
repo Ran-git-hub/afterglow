@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { dailySets } from "@/lib/mockData";
 import { fetchDailySetsFromSupabase, hasSupabaseConfig } from "@/lib/supabaseData";
 
@@ -12,6 +12,7 @@ export default function Home() {
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [hasSlideTransition, setHasSlideTransition] = useState(true);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isLoadingDailySets, setIsLoadingDailySets] = useState(hasSupabaseConfig);
   const touchStartX = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
@@ -25,9 +26,41 @@ export default function Home() {
 
   const memories = useMemo(() => selectedSet?.memories.slice(0, 3) ?? [], [selectedSet]);
   const activeMemory = memories[activeIndex] ?? memories[0];
-  const previousMemory = memories[(activeIndex - 1 + memories.length) % memories.length];
-  const nextMemory = memories[(activeIndex + 1) % memories.length];
   const selectedDateIndex = availableDailySets.findIndex((set) => set.runDate === selectedDate);
+  const previousLocation = getAdjacentMemoryLocation(-1);
+  const nextLocation = getAdjacentMemoryLocation(1);
+  const previousMemory = previousLocation
+    ? availableDailySets[previousLocation.dateIndex]?.memories[previousLocation.memoryIndex]
+    : activeMemory;
+  const nextMemory = nextLocation
+    ? availableDailySets[nextLocation.dateIndex]?.memories[nextLocation.memoryIndex]
+    : activeMemory;
+
+  function getAdjacentMemoryLocation(direction: -1 | 1) {
+    if (!availableDailySets.length || selectedDateIndex < 0 || !memories.length) {
+      return null;
+    }
+
+    if (direction === 1) {
+      if (activeIndex < memories.length - 1) {
+        return { dateIndex: selectedDateIndex, memoryIndex: activeIndex + 1 };
+      }
+
+      const nextDateIndex = selectedDateIndex + 1;
+      const nextDateMemories = availableDailySets[nextDateIndex]?.memories.slice(0, 3) ?? [];
+      return nextDateMemories.length ? { dateIndex: nextDateIndex, memoryIndex: 0 } : null;
+    }
+
+    if (activeIndex > 0) {
+      return { dateIndex: selectedDateIndex, memoryIndex: activeIndex - 1 };
+    }
+
+    const previousDateIndex = selectedDateIndex - 1;
+    const previousDateMemories = availableDailySets[previousDateIndex]?.memories.slice(0, 3) ?? [];
+    return previousDateMemories.length
+      ? { dateIndex: previousDateIndex, memoryIndex: previousDateMemories.length - 1 }
+      : null;
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -58,12 +91,78 @@ export default function Home() {
   }, [selectedDate]);
 
   useEffect(() => {
+    setIsDescriptionExpanded(false);
+  }, [activeMemory?.id]);
+
+  useEffect(() => {
     return () => {
       if (slideTimeoutRef.current) {
         clearTimeout(slideTimeoutRef.current);
       }
     };
   }, []);
+
+  function chooseDate(date: string) {
+    setSelectedDate(date);
+    setActiveIndex(0);
+    setDragOffset(0);
+    dragOffsetRef.current = 0;
+    setIsDragging(false);
+    setHasSlideTransition(true);
+  }
+
+  function showPrevious() {
+    slideToImage(-1);
+  }
+
+  function showNext() {
+    slideToImage(1);
+  }
+
+  const slideToImage = useCallback(
+    (direction: -1 | 1) => {
+      const targetLocation = direction === 1 ? nextLocation : previousLocation;
+
+      if (!targetLocation) {
+        return;
+      }
+
+      const targetDate = availableDailySets[targetLocation.dateIndex]?.runDate;
+      if (!targetDate) {
+        return;
+      }
+
+      if (slideTimeoutRef.current) {
+        return;
+      }
+
+      const frameWidth = imageFrameRef.current?.clientWidth ?? 360;
+      const endOffset = direction === 1 ? -frameWidth : frameWidth;
+
+      touchStartX.current = null;
+      dragOffsetRef.current = endOffset;
+      setIsDragging(false);
+      setHasSlideTransition(true);
+      setDragOffset(endOffset);
+
+      slideTimeoutRef.current = setTimeout(() => {
+        setHasSlideTransition(false);
+        slideTimeoutRef.current = null;
+
+        requestAnimationFrame(() => {
+          setSelectedDate(targetDate);
+          setActiveIndex(targetLocation.memoryIndex);
+          dragOffsetRef.current = 0;
+          setDragOffset(0);
+
+          requestAnimationFrame(() => {
+            setHasSlideTransition(true);
+          });
+        });
+      }, 300);
+    },
+    [availableDailySets, nextLocation, previousLocation]
+  );
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -89,64 +188,7 @@ export default function Home() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [memories.length]);
-
-  function chooseDate(date: string) {
-    setSelectedDate(date);
-    setActiveIndex(0);
-    setDragOffset(0);
-    dragOffsetRef.current = 0;
-    setIsDragging(false);
-    setHasSlideTransition(true);
-  }
-
-  function showPrevious() {
-    slideToImage(-1);
-  }
-
-  function showNext() {
-    slideToImage(1);
-  }
-
-  function slideToImage(direction: -1 | 1) {
-    if (memories.length < 2) {
-      return;
-    }
-
-    if (slideTimeoutRef.current) {
-      return;
-    }
-
-    const frameWidth = imageFrameRef.current?.clientWidth ?? 360;
-    const endOffset = direction === 1 ? -frameWidth : frameWidth;
-
-    touchStartX.current = null;
-    dragOffsetRef.current = endOffset;
-    setIsDragging(false);
-    setHasSlideTransition(true);
-    setDragOffset(endOffset);
-
-    slideTimeoutRef.current = setTimeout(() => {
-      setHasSlideTransition(false);
-      slideTimeoutRef.current = null;
-
-      requestAnimationFrame(() => {
-        setActiveIndex((current) => {
-          if (direction === 1) {
-            return (current + 1) % memories.length;
-          }
-
-          return current === 0 ? memories.length - 1 : current - 1;
-        });
-        dragOffsetRef.current = 0;
-        setDragOffset(0);
-
-        requestAnimationFrame(() => {
-          setHasSlideTransition(true);
-        });
-      });
-    }, 300);
-  }
+  }, [slideToImage]);
 
   function chooseAdjacentDate(direction: -1 | 1) {
     const nextDate = availableDailySets[selectedDateIndex + direction]?.runDate;
@@ -235,8 +277,8 @@ export default function Home() {
 
   return (
     <main className="min-h-screen px-5 py-6 text-slate-100 sm:px-8 lg:px-10">
-      <section className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col">
-        <header className="flex flex-col gap-7 sm:gap-8">
+      <section className="page-shell mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col">
+        <header className="site-header flex flex-col gap-7 sm:gap-8">
           <div>
             <h1 className="font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
               Afterglow
@@ -290,14 +332,14 @@ export default function Home() {
         </header>
 
         <div
-          className="flex flex-1 touch-pan-y flex-col justify-center py-8 sm:py-10 lg:py-8"
+          className="memory-stage flex flex-1 touch-pan-y flex-col justify-center py-8 sm:py-10 lg:py-8"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
         >
-          <div className="relative overflow-hidden px-6 sm:px-12">
-            <div className="pointer-events-none absolute left-0 top-1/2 hidden aspect-[4/3] w-56 -translate-x-[72%] -translate-y-1/2 overflow-hidden rounded-md border border-white/10 opacity-30 blur-[0.2px] sm:block lg:w-80">
+          <div className="gallery-row relative overflow-hidden px-6 sm:px-12">
+            <div className="side-preview pointer-events-none absolute left-0 top-1/2 hidden aspect-[4/3] w-56 -translate-x-[72%] -translate-y-1/2 overflow-hidden rounded-md border border-white/10 opacity-30 blur-[0.2px] sm:block">
               <Image
                 key={previousMemory.id}
                 src={previousMemory.imageUrl}
@@ -307,7 +349,7 @@ export default function Home() {
                 className="object-cover"
               />
             </div>
-            <div className="pointer-events-none absolute right-0 top-1/2 hidden aspect-[4/3] w-56 translate-x-[72%] -translate-y-1/2 overflow-hidden rounded-md border border-white/10 opacity-30 blur-[0.2px] sm:block lg:w-80">
+            <div className="side-preview pointer-events-none absolute right-0 top-1/2 hidden aspect-[4/3] w-56 translate-x-[72%] -translate-y-1/2 overflow-hidden rounded-md border border-white/10 opacity-30 blur-[0.2px] sm:block">
               <Image
                 key={nextMemory.id}
                 src={nextMemory.imageUrl}
@@ -330,7 +372,7 @@ export default function Home() {
             <div className="viewer-width mx-auto">
               <div
                 ref={imageFrameRef}
-                className="relative aspect-[16/10] overflow-hidden rounded-md border border-ember/25 bg-slate-950/50 shadow-glow image-fade lg:aspect-[16/9]"
+                className="gallery-frame relative aspect-[16/10] overflow-hidden rounded-md border border-ember/25 bg-slate-950/50 shadow-glow image-fade lg:aspect-[16/9]"
               >
                 <div
                   className={`flex h-full w-[300%] ${
@@ -366,22 +408,33 @@ export default function Home() {
             </button>
           </div>
 
-            <div className="relative mx-auto mt-7 grid min-h-[25rem] w-full max-w-6xl content-start gap-6 sm:min-h-[21rem] lg:min-h-[22rem] lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
+            <div className="memory-copy relative mx-auto mt-7 grid min-h-[25rem] w-full max-w-6xl content-start gap-6 sm:min-h-[21rem] lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.22em] text-ember/80">
                 {activeMemory.rank.toString().padStart(2, "0")} / 03
               </p>
-              <h2 className="mt-4 text-balance text-3xl leading-tight text-slate-100 sm:text-4xl lg:text-5xl">
+              <h2 className="memory-title mt-4 text-balance text-slate-100">
                 {activeMemory.newsTitle}
               </h2>
             </div>
 
             <div className="max-w-[43rem] lg:pt-1">
-              <p className="text-pretty text-base leading-8 text-mist sm:text-lg lg:text-[1.18rem] lg:leading-9">
+              <p
+                className={`memory-description text-pretty text-mist ${
+                  isDescriptionExpanded ? "is-expanded" : ""
+                }`}
+              >
                 {activeMemory.visualDescription}
               </p>
+              <button
+                className="memory-toggle mt-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-ember/80 transition hover:text-ember"
+                type="button"
+                onClick={() => setIsDescriptionExpanded((isExpanded) => !isExpanded)}
+              >
+                {isDescriptionExpanded ? "Collapse" : "Read full"}
+              </button>
               {activeMemory.artworkStyle || activeMemory.feelingTags ? (
-                <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/10 pt-4 font-mono text-[0.68rem] uppercase tracking-[0.14em]">
+                <div className="memory-meta mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/10 pt-4 font-mono text-[0.68rem] uppercase tracking-[0.14em]">
                   {activeMemory.feelingTags ? <p className="text-ember/75">{activeMemory.feelingTags}</p> : null}
                   {activeMemory.artworkStyle ? (
                     <p className="basis-full text-mist">Style: {activeMemory.artworkStyle}</p>
@@ -390,7 +443,7 @@ export default function Home() {
               ) : null}
             </div>
 
-            <div className="flex h-5 justify-start gap-2 lg:absolute lg:left-0 lg:top-[21rem]" aria-label="Image position">
+            <div className="image-position flex h-5 justify-start gap-2 lg:absolute lg:left-0" aria-label="Image position">
               {memories.map((memory, index) => (
                 <button
                   key={memory.id}
