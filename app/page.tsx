@@ -13,10 +13,12 @@ export default function Home() {
   const [isDragging, setIsDragging] = useState(false);
   const [hasSlideTransition, setHasSlideTransition] = useState(true);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isDescriptionOverflowing, setIsDescriptionOverflowing] = useState(false);
   const [isLoadingDailySets, setIsLoadingDailySets] = useState(hasSupabaseConfig);
   const touchStartX = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
   const imageFrameRef = useRef<HTMLDivElement | null>(null);
+  const descriptionRef = useRef<HTMLParagraphElement | null>(null);
   const slideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeDateRef = useRef<HTMLButtonElement | null>(null);
 
@@ -92,6 +94,40 @@ export default function Home() {
 
   useEffect(() => {
     setIsDescriptionExpanded(false);
+  }, [activeMemory?.id]);
+
+  useEffect(() => {
+    function measureDescriptionOverflow() {
+      const description = descriptionRef.current;
+      if (!description) {
+        setIsDescriptionOverflowing(false);
+        return;
+      }
+
+      const wasExpanded = description.classList.contains("is-expanded");
+      if (wasExpanded) {
+        description.classList.remove("is-expanded");
+      }
+
+      const isOverflowing = description.scrollHeight > description.clientHeight + 1;
+
+      if (wasExpanded) {
+        description.classList.add("is-expanded");
+      }
+
+      setIsDescriptionOverflowing(isOverflowing);
+      if (!isOverflowing) {
+        setIsDescriptionExpanded(false);
+      }
+    }
+
+    const animationFrame = requestAnimationFrame(measureDescriptionOverflow);
+    window.addEventListener("resize", measureDescriptionOverflow);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", measureDescriptionOverflow);
+    };
   }, [activeMemory?.id]);
 
   useEffect(() => {
@@ -420,19 +456,22 @@ export default function Home() {
 
             <div className="max-w-[43rem] lg:pt-1">
               <p
+                ref={descriptionRef}
                 className={`memory-description text-pretty text-mist ${
                   isDescriptionExpanded ? "is-expanded" : ""
                 }`}
               >
                 {activeMemory.visualDescription}
               </p>
-              <button
-                className="memory-toggle mt-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-ember/80 transition hover:text-ember"
-                type="button"
-                onClick={() => setIsDescriptionExpanded((isExpanded) => !isExpanded)}
-              >
-                {isDescriptionExpanded ? "Collapse" : "Read full"}
-              </button>
+              {isDescriptionOverflowing ? (
+                <button
+                  className="memory-toggle mt-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-ember/80 transition hover:text-ember"
+                  type="button"
+                  onClick={() => setIsDescriptionExpanded((isExpanded) => !isExpanded)}
+                >
+                  {isDescriptionExpanded ? "Collapse" : "Read full"}
+                </button>
+              ) : null}
               {activeMemory.artworkStyle || activeMemory.feelingTags ? (
                 <div className="memory-meta mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/10 pt-4 font-mono text-[0.68rem] uppercase tracking-[0.14em]">
                   {activeMemory.feelingTags ? <p className="text-ember/75">{activeMemory.feelingTags}</p> : null}
