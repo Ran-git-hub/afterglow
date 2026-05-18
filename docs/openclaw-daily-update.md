@@ -101,6 +101,19 @@ The visible title under the image.
 
 A factual summary or condensed source context. The website does not currently display this separately, but it should be stored for traceability.
 
+`artwork_style text`
+
+The visible style label for the generated work. This is shown above the title so users can understand the visual language of the final image.
+
+Recommended format:
+
+```text
+Impressionism · Monet
+Post-Impressionism · Van Gogh
+Cubism · Picasso
+Abstract Expressionism
+```
+
 `visual_description text not null`
 
 The main visible body text on the page. Write this as the painterly interpretation shown to users.
@@ -208,6 +221,7 @@ Update timestamp. Set to `now()` on every upsert.
    - assign `rank` 1 through 3
    - create `news_title`
    - create `news_summary`
+   - choose `artwork_style`
    - create `visual_description`
    - create `feeling_tags`
    - create image prompt and store it in `prompt_used`
@@ -231,6 +245,7 @@ insert into public.visual_memory (
   news_title,
   news_summary,
   source_url,
+  artwork_style,
   visual_description,
   feeling_tags,
   prompt_used,
@@ -248,6 +263,7 @@ insert into public.visual_memory (
   'Example title',
   'Short factual summary for traceability.',
   'https://example.com/source',
+  'Post-Impressionism · Van Gogh',
   'Painterly public-facing interpretation shown on the page.',
   'Painter''s feeling: #Example #Tag',
   'Final MiniMax image prompt.',
@@ -264,6 +280,7 @@ on conflict (run_date, rank) do update set
   news_title = excluded.news_title,
   news_summary = excluded.news_summary,
   source_url = excluded.source_url,
+  artwork_style = excluded.artwork_style,
   visual_description = excluded.visual_description,
   feeling_tags = excluded.feeling_tags,
   prompt_used = excluded.prompt_used,
@@ -292,7 +309,7 @@ where run_date = '2026-05-16'
 Check the public rows for a day:
 
 ```sql
-select run_date, rank, news_title, image_path, image_url, published
+select run_date, rank, news_title, artwork_style, image_path, image_url, published
 from public.visual_memory
 where run_date = '2026-05-16'
 order by rank asc;
@@ -301,7 +318,7 @@ order by rank asc;
 Check what the public website can see:
 
 ```sql
-select run_date, rank, news_title, image_path, image_url
+select run_date, rank, news_title, artwork_style, image_path, image_url
 from public.visual_memory
 where published = true
 order by run_date desc, rank asc

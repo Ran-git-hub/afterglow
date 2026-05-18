@@ -9,6 +9,7 @@ create table if not exists public.visual_memory (
   news_title text not null,
   news_summary text not null default '',
   source_url text,
+  artwork_style text,
   visual_description text not null,
   feeling_tags text,
   prompt_used text,
@@ -28,6 +29,9 @@ create table if not exists public.visual_memory (
   ),
   constraint visual_memory_one_rank_per_day unique (run_date, rank)
 );
+
+alter table public.visual_memory
+  add column if not exists artwork_style text;
 
 create index if not exists visual_memory_run_date_rank_idx
   on public.visual_memory (run_date desc, rank asc);

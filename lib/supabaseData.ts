@@ -9,6 +9,7 @@ type VisualMemoryRow = {
   news_title?: string;
   news_summary?: string;
   source_url?: string;
+  artwork_style?: string;
   visual_description?: string;
   feeling_tags?: string;
   prompt_used?: string;
@@ -66,6 +67,7 @@ function groupRowsByDate(rows: VisualMemoryRow[]): DailySet[] {
       newsTitle: row.news_title ?? "Untitled memory",
       newsSummary: row.news_summary ?? "",
       sourceUrl: row.source_url,
+      artworkStyle: row.artwork_style,
       visualDescription: row.visual_description ?? row.prompt_used ?? row.news_summary ?? "",
       feelingTags: row.feeling_tags,
       imageUrl: resolveImageUrl(row),

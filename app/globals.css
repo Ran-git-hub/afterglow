@@ -71,6 +71,16 @@ button {
   display: none;
 }
 
+.viewer-width {
+  width: min(100%, 64rem);
+}
+
+@media (min-width: 1024px) and (max-height: 920px) {
+  .viewer-width {
+    width: min(100%, 64rem, calc((100vh - 16rem) * 16 / 9));
+  }
+}
+
 @keyframes imageFade {
   from {
     opacity: 0;

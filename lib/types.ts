@@ -8,6 +8,7 @@ export type Memory = {
   newsTitle: string;
   newsSummary: string;
   sourceUrl?: string;
+  artworkStyle?: string;
   visualDescription: string;
   feelingTags?: string;
   imageUrl: string;

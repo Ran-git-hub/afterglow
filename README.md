@@ -4,6 +4,12 @@ What remains after the world is seen.
 
 Afterglow is a quiet visual diary for AI-generated daily news memories. The public page shows one day at a time, with three visual memories per date and simple navigation across images and dates.
 
+Production:
+
+```text
+https://afterglow-today.vercel.app
+```
+
 ## Run locally
 
 ```bash
@@ -31,7 +37,7 @@ The website can run without Supabase credentials. When these variables are missi
 ```text
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET=
+NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET=afterglow-images
 ```
 
 `NEXT_PUBLIC_SUPABASE_ANON_KEY` is also supported as a fallback key name for Vercel's Supabase integration.
@@ -43,9 +49,15 @@ NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET=
 - Next.js + TypeScript + Tailwind CSS
 - Static mock data in `lib/mockData.ts`
 - Local mock visual assets in `public/mock`
+- Supabase schema in `supabase/schema.sql`
+- Seed SQL in `supabase/seed_mock_data_stepwise.sql`
+- OpenClaw daily update guide in `docs/openclaw-daily-update.md`
 - Three-image daily view
 - Left/right image navigation
+- Keyboard arrow navigation on desktop
+- Touch swipe navigation on mobile
 - Date switching
+- Supabase loading skeleton
 - Static export enabled for simple Vercel deployment
 
 ## Target architecture
@@ -75,15 +87,21 @@ rank
 news_title
 news_summary
 source_url
+artwork_style
 visual_description
 feeling_tags
 image_url
 image_path
 mood_tag
 is_quiet_day
+published
 ```
 
 `image_url` can be a full public URL. If OpenClaw stores only `image_path`, set `NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET` so the website can resolve a public Storage URL.
+
+Only rows with `published = true` are visible on the website.
+
+`artwork_style` is displayed above the title, for example `Impressionism · Monet` or `Abstract Expressionism`.
 
 ### Generation pipeline
 
@@ -92,6 +110,12 @@ is_quiet_day
 - OpenClaw calls the MiniMax CLI to generate one image per selected news item
 - OpenClaw uploads the generated images to Supabase Storage
 - OpenClaw inserts the final metadata into the `visual_memory` table
+
+See the full daily update contract:
+
+```text
+docs/openclaw-daily-update.md
+```
 
 The intended daily flow is:
 
@@ -107,9 +131,13 @@ OpenClaw daily schedule
 
 This keeps Vercel focused on hosting the public site, while OpenClaw handles the long-running and credential-heavy generation work.
 
-## Next step
+## Setup Files
 
-1. Create the Supabase `visual_memory` table and Storage bucket.
-2. Configure the Vercel environment variables for Supabase reads.
-3. Add an OpenClaw job that calls the MiniMax CLI for daily news search and image generation.
-4. Have the OpenClaw job upload generated images and insert the final records into Supabase.
+Use these files when setting up a fresh Supabase project or test data:
+
+```text
+supabase/schema.sql
+supabase/seed_mock_data_stepwise.sql
+```
+
+`supabase/seed_mock_data.sql` is a compact seed version. The stepwise version is easier to run and debug in Supabase SQL Editor.

@@ -244,7 +244,7 @@ export default function Home() {
             <p className="mt-2 text-sm text-dim">What remains after the world is seen</p>
           </div>
 
-          <div className="mx-auto grid w-full max-w-5xl grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+          <div className="viewer-width mx-auto grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
             <button
               aria-label="Previous date"
               className="grid h-10 place-items-center border border-white/10 bg-white/[0.03] font-mono text-lg text-mist transition hover:border-ember/40 hover:text-slate-100 disabled:cursor-default disabled:opacity-25 disabled:hover:border-white/10 disabled:hover:text-mist"
@@ -290,7 +290,7 @@ export default function Home() {
         </header>
 
         <div
-          className="flex flex-1 touch-pan-y flex-col justify-center py-8 sm:py-10"
+          className="flex flex-1 touch-pan-y flex-col justify-center py-8 sm:py-10 lg:py-8"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -327,7 +327,7 @@ export default function Home() {
               ‹
             </button>
 
-            <div className="mx-auto max-w-5xl">
+            <div className="viewer-width mx-auto">
               <div
                 ref={imageFrameRef}
                 className="relative aspect-[16/10] overflow-hidden rounded-md border border-ember/25 bg-slate-950/50 shadow-glow image-fade lg:aspect-[16/9]"
@@ -366,7 +366,7 @@ export default function Home() {
             </button>
           </div>
 
-            <div className="relative mx-auto mt-7 grid min-h-[25rem] w-full max-w-6xl content-start gap-6 sm:min-h-[21rem] lg:h-[22rem] lg:grid-cols-[0.9fr_1.4fr] lg:items-start lg:overflow-hidden">
+            <div className="relative mx-auto mt-7 grid min-h-[25rem] w-full max-w-6xl content-start gap-6 sm:min-h-[21rem] lg:min-h-[22rem] lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.22em] text-ember/80">
                 {activeMemory.rank.toString().padStart(2, "0")} / 03
@@ -380,14 +380,17 @@ export default function Home() {
               <p className="text-pretty text-base leading-8 text-mist sm:text-lg lg:text-[1.18rem] lg:leading-9">
                 {activeMemory.visualDescription}
               </p>
-              {activeMemory.feelingTags ? (
-                <p className="mt-6 border-t border-white/10 pt-4 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-ember/75">
-                  {activeMemory.feelingTags}
-                </p>
+              {activeMemory.artworkStyle || activeMemory.feelingTags ? (
+                <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/10 pt-4 font-mono text-[0.68rem] uppercase tracking-[0.14em]">
+                  {activeMemory.feelingTags ? <p className="text-ember/75">{activeMemory.feelingTags}</p> : null}
+                  {activeMemory.artworkStyle ? (
+                    <p className="basis-full text-mist">Style: {activeMemory.artworkStyle}</p>
+                  ) : null}
+                </div>
               ) : null}
             </div>
 
-            <div className="flex h-5 justify-start gap-2 lg:absolute lg:bottom-0 lg:left-0" aria-label="Image position">
+            <div className="flex h-5 justify-start gap-2 lg:absolute lg:left-0 lg:top-[21rem]" aria-label="Image position">
               {memories.map((memory, index) => (
                 <button
                   key={memory.id}
@@ -433,7 +436,7 @@ function LoadingPage() {
             <p className="mt-2 text-sm text-dim">What remains after the world is seen</p>
           </div>
 
-          <div className="mx-auto grid w-full max-w-5xl grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+          <div className="viewer-width mx-auto grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
             <div className="h-10 border border-white/10 bg-white/[0.03]" />
             <div className="flex gap-2">
               <div className="h-10 w-28 border border-ember/30 bg-ember/[0.08]" />
@@ -443,9 +446,9 @@ function LoadingPage() {
           </div>
         </header>
 
-        <div className="flex flex-1 flex-col justify-center py-8 sm:py-10">
+        <div className="flex flex-1 flex-col justify-center py-8 sm:py-10 lg:py-8">
           <div className="relative overflow-hidden px-6 sm:px-12">
-            <div className="mx-auto max-w-5xl">
+            <div className="viewer-width mx-auto">
               <div className="relative aspect-[16/10] overflow-hidden rounded-md border border-white/10 bg-slate-950/70 lg:aspect-[16/9]">
                 <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/[0.06] via-white/[0.025] to-transparent" />
               </div>
