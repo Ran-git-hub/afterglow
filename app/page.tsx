@@ -85,10 +85,16 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    activeDateRef.current?.scrollIntoView({
+    const activeDate = activeDateRef.current;
+    const dateScroller = activeDate?.parentElement;
+
+    if (!activeDate || !dateScroller) {
+      return;
+    }
+
+    dateScroller.scrollTo({
       behavior: "smooth",
-      block: "nearest",
-      inline: "center"
+      left: activeDate.offsetLeft - dateScroller.clientWidth / 2 + activeDate.clientWidth / 2
     });
   }, [selectedDate]);
 
@@ -139,12 +145,20 @@ export default function Home() {
   }, []);
 
   function chooseDate(date: string) {
+    const scrollTop = window.scrollY;
     setSelectedDate(date);
     setActiveIndex(0);
     setDragOffset(0);
     dragOffsetRef.current = 0;
     setIsDragging(false);
     setHasSlideTransition(true);
+    requestAnimationFrame(() => window.scrollTo({ top: scrollTop }));
+  }
+
+  function chooseImage(index: number) {
+    const scrollTop = window.scrollY;
+    setActiveIndex(index);
+    requestAnimationFrame(() => window.scrollTo({ top: scrollTop }));
   }
 
   function showPrevious() {
@@ -184,6 +198,7 @@ export default function Home() {
       slideTimeoutRef.current = setTimeout(() => {
         setHasSlideTransition(false);
         slideTimeoutRef.current = null;
+        const scrollTop = window.scrollY;
 
         requestAnimationFrame(() => {
           setSelectedDate(targetDate);
@@ -192,6 +207,7 @@ export default function Home() {
           setDragOffset(0);
 
           requestAnimationFrame(() => {
+            window.scrollTo({ top: scrollTop });
             setHasSlideTransition(true);
           });
         });
@@ -444,7 +460,7 @@ export default function Home() {
             </button>
           </div>
 
-            <div className="memory-copy relative mx-auto mt-7 grid min-h-[25rem] w-full max-w-6xl content-start gap-6 sm:min-h-[21rem] lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
+            <div className="memory-copy relative mx-auto mt-7 grid w-full max-w-6xl content-start gap-6 lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.22em] text-ember/80">
                 {activeMemory.rank.toString().padStart(2, "0")} / 03
@@ -465,7 +481,7 @@ export default function Home() {
               </p>
               {isDescriptionOverflowing ? (
                 <button
-                  className="memory-toggle mt-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-ember/80 transition hover:text-ember"
+                  className="memory-toggle mt-3 font-mono text-[0.68rem] uppercase tracking-[0.14em] text-mist/75 transition hover:text-slate-100"
                   type="button"
                   onClick={() => setIsDescriptionExpanded((isExpanded) => !isExpanded)}
                 >
@@ -489,7 +505,7 @@ export default function Home() {
                   aria-label={`Show image ${index + 1}`}
                   className="group grid h-5 w-8 place-items-center"
                   type="button"
-                  onClick={() => setActiveIndex(index)}
+                  onClick={() => chooseImage(index)}
                 >
                   <span
                     className={`h-1.5 rounded-full transition ${

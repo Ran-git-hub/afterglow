@@ -75,6 +75,10 @@ button {
   width: min(100%, 64rem);
 }
 
+.memory-stage {
+  flex: 0 0 auto;
+}
+
 .memory-title {
   font-size: 1.875rem;
   line-height: 1.18;
@@ -101,7 +105,8 @@ button {
   }
 
   .memory-copy {
-    min-height: 22rem;
+    min-height: 18rem;
+    padding-bottom: 3rem;
   }
 
   .memory-title {
@@ -115,7 +120,7 @@ button {
   }
 
   .image-position {
-    top: 21rem;
+    bottom: 0;
   }
 }
 
@@ -145,7 +150,7 @@ button {
 
   .memory-copy {
     margin-top: 1rem;
-    min-height: 12rem;
+    min-height: 16.25rem;
     gap: 1.5rem;
   }
 
@@ -176,10 +181,6 @@ button {
     font-size: 0.72rem;
     line-height: 1.2rem;
   }
-
-  .image-position {
-    top: 11.5rem;
-  }
 }
 
 @media (min-width: 1024px) and (max-height: 1120px) {
@@ -189,6 +190,10 @@ button {
 
   .memory-title {
     font-size: 1.5rem;
+  }
+
+  .memory-copy {
+    min-height: 16.25rem;
   }
 
   .memory-description {
@@ -202,20 +207,6 @@ button {
 
   .side-preview {
     display: none;
-  }
-}
-
-@media (min-width: 1024px) and (max-height: 960px) {
-  .viewer-width {
-    width: min(100%, 68rem, calc(50vh * 16 / 9));
-  }
-
-  .memory-copy {
-    min-height: 10rem;
-  }
-
-  .image-position {
-    top: 9.5rem;
   }
 }
 
