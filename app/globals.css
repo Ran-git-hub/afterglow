@@ -75,6 +75,11 @@ button {
   width: min(100%, 64rem);
 }
 
+.date-button {
+  min-width: 8.75rem;
+  text-align: center;
+}
+
 .memory-stage {
   flex: 0 0 auto;
 }
@@ -137,6 +142,10 @@ button {
 
   .gallery-row {
     padding-inline: 4rem;
+  }
+
+  .date-nav {
+    width: min(100%, 72rem);
   }
 
   .viewer-width {

@@ -339,7 +339,7 @@ export default function Home() {
             <p className="mt-2 text-sm text-dim">What remains after the world is seen</p>
           </div>
 
-          <div className="viewer-width mx-auto grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+          <div className="date-nav viewer-width mx-auto grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
             <button
               aria-label="Previous date"
               className="grid h-10 place-items-center border border-white/10 bg-white/[0.03] font-mono text-lg text-mist transition hover:border-ember/40 hover:text-slate-100 disabled:cursor-default disabled:opacity-25 disabled:hover:border-white/10 disabled:hover:text-mist"
@@ -350,7 +350,7 @@ export default function Home() {
               ‹
             </button>
 
-            <div className="no-scrollbar flex gap-2 overflow-x-auto scroll-smooth px-1" aria-label="Select date">
+            <div className="date-scroller no-scrollbar flex gap-2 overflow-x-auto scroll-smooth px-1" aria-label="Select date">
               {availableDailySets.map((set) => {
                 const isSelected = selectedDate === set.runDate;
 
@@ -358,7 +358,7 @@ export default function Home() {
                   <button
                     key={set.runDate}
                     ref={isSelected ? activeDateRef : null}
-                    className={`shrink-0 border px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition ${
+                    className={`date-button shrink-0 overflow-visible whitespace-nowrap border px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition ${
                       isSelected
                         ? "border-ember/60 bg-ember/10 text-slate-100"
                         : "border-white/10 bg-white/[0.03] text-dim hover:border-ember/40 hover:text-mist"
