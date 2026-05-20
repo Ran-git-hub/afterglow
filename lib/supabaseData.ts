@@ -27,7 +27,13 @@ const supabasePublishableKey =
 const storageBucket = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET;
 
 const supabase =
-  supabaseUrl && supabasePublishableKey ? createClient(supabaseUrl, supabasePublishableKey) : null;
+  supabaseUrl && supabasePublishableKey
+    ? createClient(supabaseUrl, supabasePublishableKey, {
+        global: {
+          fetch: (input, init) => fetch(input, { ...init, cache: "no-store" })
+        }
+      })
+    : null;
 
 export const hasSupabaseConfig = Boolean(supabase);
 

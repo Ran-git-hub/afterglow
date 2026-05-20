@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { appBuildId } from "@/lib/buildInfo";
 import { dailySets } from "@/lib/mockData";
 import { fetchDailySetsFromSupabase, hasSupabaseConfig } from "@/lib/supabaseData";
 
@@ -523,9 +524,10 @@ export default function Home() {
             Disclaimer: Afterglow is an AI-generated visual interpretation of selected news themes, not a
             primary news source or factual report.
           </p>
-          <p className="mt-3 shrink-0 font-mono uppercase tracking-[0.12em] text-dim sm:mt-0">
-            © 2026 Afterglow. All rights reserved.
-          </p>
+          <div className="mt-3 shrink-0 font-mono uppercase tracking-[0.12em] text-dim sm:mt-0 sm:text-right">
+            <p>© 2026 Afterglow. All rights reserved.</p>
+            <p className="mt-1 text-[0.62rem] tracking-[0.1em] text-dim/70">Build {appBuildId}</p>
+          </div>
         </footer>
       </section>
     </main>
