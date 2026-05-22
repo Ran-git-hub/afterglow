@@ -5,3 +5,6 @@ out
 .env
 .env.local
 .DS_Store
+
+SKILL.md
+tsconfig.tsbuildinfo

@@ -76,7 +76,7 @@ button {
 }
 
 .date-button {
-  min-width: 8.75rem;
+  min-width: 7rem;
   text-align: center;
 }
 
@@ -142,10 +142,6 @@ button {
 
   .gallery-row {
     padding-inline: 4rem;
-  }
-
-  .date-nav {
-    width: min(100%, 72rem);
   }
 
   .viewer-width {

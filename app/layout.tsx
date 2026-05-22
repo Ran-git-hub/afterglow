@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Afterglow",
-  description: "What remains after the world is seen."
+  description: "The world, after passing through machine imagination."
 };
 
 export default function RootLayout({

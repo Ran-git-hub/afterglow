@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { appBuildId } from "@/lib/buildInfo";
 import { dailySets } from "@/lib/mockData";
 import { fetchDailySetsFromSupabase, hasSupabaseConfig } from "@/lib/supabaseData";
 
@@ -20,8 +20,9 @@ export default function Home() {
   const dragOffsetRef = useRef(0);
   const imageFrameRef = useRef<HTMLDivElement | null>(null);
   const descriptionRef = useRef<HTMLParagraphElement | null>(null);
+  const selectedDateButtonRef = useRef<HTMLButtonElement | null>(null);
   const slideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const activeDateRef = useRef<HTMLButtonElement | null>(null);
+  const dateWheelTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedSet = useMemo(() => {
     return availableDailySets.find((set) => set.runDate === selectedDate) ?? availableDailySets[0];
@@ -86,22 +87,22 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const activeDate = activeDateRef.current;
-    const dateScroller = activeDate?.parentElement;
+    setIsDescriptionExpanded(false);
+  }, [activeMemory?.id]);
 
-    if (!activeDate || !dateScroller) {
+  useEffect(() => {
+    const selectedDateButton = selectedDateButtonRef.current;
+    if (!selectedDateButton) {
       return;
     }
 
-    dateScroller.scrollTo({
-      behavior: "smooth",
-      left: activeDate.offsetLeft - dateScroller.clientWidth / 2 + activeDate.clientWidth / 2
+    requestAnimationFrame(() => {
+      selectedDateButton.scrollIntoView({
+        block: "nearest",
+        inline: "nearest"
+      });
     });
   }, [selectedDate]);
-
-  useEffect(() => {
-    setIsDescriptionExpanded(false);
-  }, [activeMemory?.id]);
 
   useEffect(() => {
     function measureDescriptionOverflow() {
@@ -141,6 +142,10 @@ export default function Home() {
     return () => {
       if (slideTimeoutRef.current) {
         clearTimeout(slideTimeoutRef.current);
+      }
+
+      if (dateWheelTimeoutRef.current) {
+        clearTimeout(dateWheelTimeoutRef.current);
       }
     };
   }, []);
@@ -250,6 +255,19 @@ export default function Home() {
     }
   }
 
+  function handleDateWheel(event: React.WheelEvent<HTMLDivElement>) {
+    if (dateWheelTimeoutRef.current || Math.abs(event.deltaY) < 8) {
+      return;
+    }
+
+    event.preventDefault();
+    chooseAdjacentDate(event.deltaY > 0 ? 1 : -1);
+
+    dateWheelTimeoutRef.current = setTimeout(() => {
+      dateWheelTimeoutRef.current = null;
+    }, 220);
+  }
+
   function handleTouchStart(event: React.TouchEvent<HTMLDivElement>) {
     if (slideTimeoutRef.current) {
       clearTimeout(slideTimeoutRef.current);
@@ -329,17 +347,20 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen px-5 py-6 text-slate-100 sm:px-8 lg:px-10">
+    <main className="min-h-screen px-5 pb-28 pt-6 text-slate-100 sm:px-8 lg:px-10">
       <section className="page-shell mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col">
         <header className="site-header flex flex-col gap-7 sm:gap-8">
           <div>
             <h1 className="font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
               Afterglow
             </h1>
-            <p className="mt-2 text-sm text-dim">What remains after the world is seen</p>
+            <p className="mt-2 text-sm text-dim">The world, after passing through machine imagination.</p>
           </div>
 
-          <div className="date-nav viewer-width mx-auto grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
+          <div
+            className="date-nav viewer-width mx-auto grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2"
+            onWheel={handleDateWheel}
+          >
             <button
               aria-label="Previous date"
               className="grid h-10 place-items-center border border-white/10 bg-white/[0.03] font-mono text-lg text-mist transition hover:border-ember/40 hover:text-slate-100 disabled:cursor-default disabled:opacity-25 disabled:hover:border-white/10 disabled:hover:text-mist"
@@ -357,8 +378,8 @@ export default function Home() {
                 return (
                   <button
                     key={set.runDate}
-                    ref={isSelected ? activeDateRef : null}
-                    className={`date-button shrink-0 overflow-visible whitespace-nowrap border px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition ${
+                    ref={isSelected ? selectedDateButtonRef : null}
+                    className={`date-button shrink-0 whitespace-nowrap border px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition ${
                       isSelected
                         ? "border-ember/60 bg-ember/10 text-slate-100"
                         : "border-white/10 bg-white/[0.03] text-dim hover:border-ember/40 hover:text-mist"
@@ -499,51 +520,55 @@ export default function Home() {
               ) : null}
             </div>
 
-            <div className="image-position flex h-5 justify-start gap-2 lg:absolute lg:left-0" aria-label="Image position">
-              {memories.map((memory, index) => (
-                <button
-                  key={memory.id}
-                  aria-label={`Show image ${index + 1}`}
-                  className="group grid h-5 w-8 place-items-center"
-                  type="button"
-                  onClick={() => chooseImage(index)}
-                >
-                  <span
-                    className={`h-1.5 rounded-full transition ${
-                      activeIndex === index ? "w-8 bg-ember/80" : "w-1.5 bg-white/20 group-hover:bg-white/40"
-                    }`}
-                  />
-                </button>
-              ))}
+            <div className="mt-6 max-w-2xl lg:absolute lg:bottom-0 lg:left-0 lg:mt-0">
+              <div className="image-position flex h-5 justify-start gap-2" aria-label="Image position">
+                {memories.map((memory, index) => (
+                  <button
+                    key={memory.id}
+                    aria-label={`Show image ${index + 1}`}
+                    className="group grid h-5 w-8 place-items-center"
+                    type="button"
+                    onClick={() => chooseImage(index)}
+                  >
+                    <span
+                      className={`h-1.5 rounded-full transition ${
+                        activeIndex === index ? "w-8 bg-ember/80" : "w-1.5 bg-white/20 group-hover:bg-white/40"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <footer className="border-t border-white/10 py-5 text-xs leading-6 text-dim sm:flex sm:items-center sm:justify-between sm:gap-8">
-          <p>
-            Disclaimer: Afterglow is an AI-generated visual interpretation of selected news themes, not a
-            primary news source or factual report.
-          </p>
-          <div className="mt-3 shrink-0 font-mono uppercase tracking-[0.12em] text-dim sm:mt-0 sm:text-right">
-            <p>© 2026 Afterglow. All rights reserved.</p>
-            <p className="mt-1 text-[0.62rem] tracking-[0.1em] text-dim/70">Build {appBuildId}</p>
-          </div>
-        </footer>
       </section>
+      <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-[#080b10]/95 px-5 py-4 text-center font-mono uppercase backdrop-blur-sm">
+        <p className="text-[0.68rem] leading-5 tracking-[0.08em] text-dim/75">
+          Disclaimer: Afterglow presents AI-generated interpretations of selected news and themes, translated into
+          images by AI. It is not a primary news source or a factual report.
+        </p>
+        <p className="mt-1 text-xs leading-5 tracking-[0.12em] text-dim">
+          © 2026 Afterglow. All rights reserved. <span className="px-2 text-dim/70">|</span>{" "}
+          <Link className="transition hover:text-mist" href="/about">
+            About
+          </Link>
+        </p>
+      </footer>
     </main>
   );
 }
 
 function LoadingPage() {
   return (
-    <main className="min-h-screen px-5 py-6 text-slate-100 sm:px-8 lg:px-10" aria-busy="true">
+    <main className="min-h-screen px-5 pb-28 pt-6 text-slate-100 sm:px-8 lg:px-10" aria-busy="true">
       <section className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col">
         <header className="flex flex-col gap-7 sm:gap-8">
           <div>
             <h1 className="font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
               Afterglow
             </h1>
-            <p className="mt-2 text-sm text-dim">What remains after the world is seen</p>
+            <p className="mt-2 text-sm text-dim">The world, after passing through machine imagination.</p>
           </div>
 
           <div className="viewer-width mx-auto grid grid-cols-[2.5rem_minmax(0,1fr)_2.5rem] items-center gap-2">
@@ -583,6 +608,18 @@ function LoadingPage() {
           </div>
         </div>
       </section>
+      <footer className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-[#080b10]/95 px-5 py-4 text-center font-mono uppercase backdrop-blur-sm">
+        <p className="text-[0.68rem] leading-5 tracking-[0.08em] text-dim/75">
+          Disclaimer: Afterglow presents AI-generated interpretations of selected news and themes, translated into
+          images by AI. It is not a primary news source or a factual report.
+        </p>
+        <p className="mt-1 text-xs leading-5 tracking-[0.12em] text-dim">
+          © 2026 Afterglow. All rights reserved. <span className="px-2 text-dim/70">|</span>{" "}
+          <Link className="transition hover:text-mist" href="/about">
+            About
+          </Link>
+        </p>
+      </footer>
     </main>
   );
 }
