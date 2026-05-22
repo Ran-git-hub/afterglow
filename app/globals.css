@@ -215,6 +215,28 @@ button {
   }
 }
 
+@media (min-width: 1600px) and (min-height: 1281px) {
+  .page-shell {
+    max-width: 96rem;
+  }
+
+  .viewer-width {
+    width: min(100%, 84rem);
+  }
+
+  .memory-copy {
+    max-width: 84rem;
+  }
+
+  .gallery-row {
+    padding-inline: 5rem;
+  }
+
+  .side-preview {
+    width: 18rem;
+  }
+}
+
 @keyframes imageFade {
   from {
     opacity: 0;

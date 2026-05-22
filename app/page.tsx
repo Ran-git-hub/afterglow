@@ -16,6 +16,7 @@ export default function Home() {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isDescriptionOverflowing, setIsDescriptionOverflowing] = useState(false);
   const [isLoadingDailySets, setIsLoadingDailySets] = useState(hasSupabaseConfig);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
   const imageFrameRef = useRef<HTMLDivElement | null>(null);
@@ -242,11 +243,16 @@ export default function Home() {
         event.preventDefault();
         slideToImage(1);
       }
+
+      if (event.key === "Escape" && isLightboxOpen) {
+        event.preventDefault();
+        setIsLightboxOpen(false);
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [slideToImage]);
+  }, [isLightboxOpen, slideToImage]);
 
   function chooseAdjacentDate(direction: -1 | 1) {
     const nextDate = availableDailySets[selectedDateIndex + direction]?.runDate;
@@ -457,7 +463,14 @@ export default function Home() {
                   }}
                 >
                   {[previousMemory, activeMemory, nextMemory].map((memory, index) => (
-                    <div key={`${memory.id}-${index}`} className="relative h-full w-1/3 shrink-0">
+                    <button
+                      key={`${memory.id}-${index}`}
+                      aria-label={index === 1 ? "Open image" : undefined}
+                      className={`relative h-full w-1/3 shrink-0 ${index === 1 ? "cursor-zoom-in" : "cursor-default"}`}
+                      disabled={index !== 1}
+                      type="button"
+                      onClick={() => setIsLightboxOpen(true)}
+                    >
                       <Image
                         src={memory.imageUrl}
                         alt={index === 1 ? memory.visualDescription : ""}
@@ -466,7 +479,7 @@ export default function Home() {
                         sizes="(min-width: 1024px) 72vw, 100vw"
                         className="object-cover"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -555,6 +568,53 @@ export default function Home() {
           </Link>
         </p>
       </footer>
+      {isLightboxOpen ? (
+        <div
+          className="fixed inset-0 z-40 grid place-items-center bg-[#05070a]/95 px-4 py-16 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Image preview"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+        >
+          <button
+            aria-label="Close image preview"
+            className="absolute right-5 top-5 z-10 grid h-11 w-11 place-items-center border border-white/15 bg-white/[0.04] font-mono text-xl text-mist transition hover:border-white/30 hover:text-slate-100"
+            type="button"
+            onClick={() => setIsLightboxOpen(false)}
+          >
+            ×
+          </button>
+          <button
+            aria-label="Previous image"
+            className="absolute left-5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-white/[0.04] font-mono text-3xl text-mist transition hover:border-white/30 hover:text-slate-100"
+            type="button"
+            onClick={() => slideToImage(-1)}
+          >
+            ‹
+          </button>
+          <div className="relative h-full max-h-[82vh] w-full max-w-[92vw]">
+            <Image
+              src={activeMemory.imageUrl}
+              alt={activeMemory.visualDescription}
+              fill
+              sizes="100vw"
+              className="object-contain"
+              priority
+            />
+          </div>
+          <button
+            aria-label="Next image"
+            className="absolute right-5 top-1/2 z-10 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-white/[0.04] font-mono text-3xl text-mist transition hover:border-white/30 hover:text-slate-100"
+            type="button"
+            onClick={() => slideToImage(1)}
+          >
+            ›
+          </button>
+        </div>
+      ) : null}
     </main>
   );
 }
