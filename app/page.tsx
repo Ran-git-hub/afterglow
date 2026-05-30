@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { dailySets } from "@/lib/mockData";
-import { fetchDailySetsFromSupabase, hasSupabaseConfig } from "@/lib/supabaseData";
+import { fetchDailySetsFromSupabase, hasSupabaseConfig, updateMemoryCollection } from "@/lib/supabaseData";
 
 export default function Home() {
   const [availableDailySets, setAvailableDailySets] = useState(hasSupabaseConfig ? [] : dailySets);
@@ -17,6 +17,7 @@ export default function Home() {
   const [isDescriptionOverflowing, setIsDescriptionOverflowing] = useState(false);
   const [isLoadingDailySets, setIsLoadingDailySets] = useState(hasSupabaseConfig);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [collectionUpdateId, setCollectionUpdateId] = useState<string | null>(null);
   const touchStartX = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
   const imageFrameRef = useRef<HTMLDivElement | null>(null);
@@ -166,6 +167,34 @@ export default function Home() {
     const scrollTop = window.scrollY;
     setActiveIndex(index);
     requestAnimationFrame(() => window.scrollTo({ top: scrollTop }));
+  }
+
+  function setMemoryCollection(memoryId: string, isCollected: boolean) {
+    setAvailableDailySets((currentDailySets) =>
+      currentDailySets.map((dailySet) => ({
+        ...dailySet,
+        memories: dailySet.memories.map((memory) =>
+          memory.id === memoryId ? { ...memory, isCollected } : memory
+        )
+      }))
+    );
+  }
+
+  async function toggleCollection() {
+    if (!activeMemory || collectionUpdateId) {
+      return;
+    }
+
+    const nextIsCollected = !activeMemory.isCollected;
+    setCollectionUpdateId(activeMemory.id);
+    setMemoryCollection(activeMemory.id, nextIsCollected);
+
+    const didUpdate = await updateMemoryCollection(activeMemory.id, nextIsCollected);
+    if (!didUpdate && hasSupabaseConfig) {
+      setMemoryCollection(activeMemory.id, !nextIsCollected);
+    }
+
+    setCollectionUpdateId(null);
   }
 
   function showPrevious() {
@@ -498,11 +527,23 @@ export default function Home() {
             <div className="memory-copy relative mx-auto mt-7 grid w-full max-w-6xl content-start gap-6 lg:grid-cols-[0.9fr_1.4fr] lg:items-start">
             <div>
               <p className="font-mono text-xs uppercase tracking-[0.22em] text-ember/80">
-                {activeMemory.rank.toString().padStart(2, "0")} / 03
+                {(activeIndex + 1).toString().padStart(2, "0")} / {memories.length.toString().padStart(2, "0")}
               </p>
               <h2 className="memory-title mt-4 text-balance text-slate-100">
                 {activeMemory.newsTitle}
               </h2>
+              <button
+                className={`mt-5 border px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition ${
+                  activeMemory.isCollected
+                    ? "border-ember/60 bg-ember/10 text-slate-100"
+                    : "border-white/10 bg-white/[0.03] text-dim hover:border-ember/40 hover:text-mist"
+                } disabled:cursor-wait disabled:opacity-60`}
+                type="button"
+                disabled={collectionUpdateId === activeMemory.id}
+                onClick={toggleCollection}
+              >
+                Collection
+              </button>
             </div>
 
             <div className="max-w-[43rem] lg:pt-1">

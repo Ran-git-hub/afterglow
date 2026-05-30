@@ -14,6 +14,7 @@ export type Memory = {
   imageUrl: string;
   moodTag: MoodTag;
   isQuietDay: boolean;
+  isCollected?: boolean;
 };
 
 export type DailySet = {

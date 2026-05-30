@@ -17,6 +17,7 @@ type VisualMemoryRow = {
   image_path?: string;
   mood_tag?: string;
   is_quiet_day?: boolean;
+  is_collected?: boolean;
 };
 
 const moodTags: MoodTag[] = ["joyful", "somber", "chaotic", "serene", "uncertain"];
@@ -78,7 +79,8 @@ function groupRowsByDate(rows: VisualMemoryRow[]): DailySet[] {
       feelingTags: row.feeling_tags,
       imageUrl: resolveImageUrl(row),
       moodTag: toMoodTag(row.mood_tag),
-      isQuietDay: row.is_quiet_day ?? false
+      isQuietDay: row.is_quiet_day ?? false,
+      isCollected: row.is_collected ?? false
     });
 
     dailySetsByDate.set(runDate, memories);
@@ -92,9 +94,33 @@ function groupRowsByDate(rows: VisualMemoryRow[]): DailySet[] {
     .sort((first, second) => second.runDate.localeCompare(first.runDate));
 }
 
+export async function updateMemoryCollection(id: string, isCollected: boolean): Promise<boolean> {
+  if (!supabase) {
+    return false;
+  }
+
+  const { data, error } = await supabase
+    .from("visual_memory")
+    .update({ is_collected: isCollected })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  return !error && Boolean(data);
+}
+
 function resolveImageUrl(row: VisualMemoryRow) {
+  const storageBase =
+    storageBucket && supabase
+      ? supabase.storage.from(storageBucket).getPublicUrl("").data.publicUrl.replace(/\/+$/, "")
+      : "";
+
   if (row.image_url) {
-    return row.image_url;
+    if (row.image_url.startsWith("http") || row.image_url.startsWith("/")) {
+      return row.image_url;
+    }
+
+    return `${storageBase}/${row.image_url}`;
   }
 
   if (!row.image_path) {

@@ -19,6 +19,7 @@ create table if not exists public.visual_memory (
     mood_tag in ('joyful', 'somber', 'chaotic', 'serene', 'uncertain')
   ),
   is_quiet_day boolean not null default false,
+  is_collected boolean not null default false,
   published boolean not null default false,
   generator text,
   model_name text,
@@ -43,6 +44,7 @@ alter table public.visual_memory enable row level security;
 
 grant usage on schema public to anon, authenticated;
 grant select on public.visual_memory to anon, authenticated;
+grant update (is_collected) on public.visual_memory to anon, authenticated;
 
 drop policy if exists "Published visual memories are readable" on public.visual_memory;
 create policy "Published visual memories are readable"
@@ -50,6 +52,14 @@ create policy "Published visual memories are readable"
   for select
   to anon, authenticated
   using (published = true);
+
+drop policy if exists "Published visual memory collection can be updated" on public.visual_memory;
+create policy "Published visual memory collection can be updated"
+  on public.visual_memory
+  for update
+  to anon, authenticated
+  using (published = true)
+  with check (published = true);
 
 -- Optional: use this bucket when image_path stores a Supabase Storage path.
 insert into storage.buckets (id, name, public)
