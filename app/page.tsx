@@ -386,8 +386,9 @@ export default function Home() {
       <section className="page-shell mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col">
         <header className="site-header flex flex-col gap-7 sm:gap-8">
           <div>
-            <h1 className="font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
-              Afterglow
+            <h1 className="brand-mark font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
+              <span>Afterglow</span>
+              <span className="brand-flag" aria-hidden="true" />
             </h1>
             <p className="mt-2 text-sm text-dim">The world, after passing through machine imagination.</p>
           </div>
@@ -666,8 +667,9 @@ function LoadingPage() {
       <section className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-7xl flex-col">
         <header className="flex flex-col gap-7 sm:gap-8">
           <div>
-            <h1 className="font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
-              Afterglow
+            <h1 className="brand-mark font-serif text-3xl font-semibold tracking-normal text-slate-100 sm:text-4xl">
+              <span>Afterglow</span>
+              <span className="brand-flag" aria-hidden="true" />
             </h1>
             <p className="mt-2 text-sm text-dim">The world, after passing through machine imagination.</p>
           </div>
