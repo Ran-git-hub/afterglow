@@ -609,6 +609,9 @@ export default function Home() {
             About
           </Link>
         </p>
+        <p className="mt-1 font-sans text-xs normal-case leading-5 tracking-normal text-dim/80">
+          This is for Enrique :-)
+        </p>
       </footer>
       {isLightboxOpen ? (
         <div
@@ -721,6 +724,9 @@ function LoadingPage() {
           <Link className="transition hover:text-mist" href="/about">
             About
           </Link>
+        </p>
+        <p className="mt-1 font-sans text-xs normal-case leading-5 tracking-normal text-dim/80">
+          This is for Enrique :-)
         </p>
       </footer>
     </main>
