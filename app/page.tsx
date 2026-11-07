@@ -3,21 +3,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { dailySets } from "@/lib/mockData";
-import { fetchDailySetsFromSupabase, hasSupabaseConfig, updateMemoryCollection } from "@/lib/supabaseData";
+import { fetchDailySetsFromAppwrite } from "@/lib/appwriteData";
+import type { DailySet } from "@/lib/types";
 
 export default function Home() {
-  const [availableDailySets, setAvailableDailySets] = useState(hasSupabaseConfig ? [] : dailySets);
-  const [selectedDate, setSelectedDate] = useState(hasSupabaseConfig ? "" : dailySets[0]?.runDate ?? "");
+  const [availableDailySets, setAvailableDailySets] = useState<DailySet[]>([]);
+  const [selectedDate, setSelectedDate] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [hasSlideTransition, setHasSlideTransition] = useState(true);
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isDescriptionOverflowing, setIsDescriptionOverflowing] = useState(false);
-  const [isLoadingDailySets, setIsLoadingDailySets] = useState(hasSupabaseConfig);
+  const [isLoadingDailySets, setIsLoadingDailySets] = useState(true);
+  const [hasDataError, setHasDataError] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const [collectionUpdateId, setCollectionUpdateId] = useState<string | null>(null);
   const touchStartX = useRef<number | null>(null);
   const dragOffsetRef = useRef(0);
   const imageFrameRef = useRef<HTMLDivElement | null>(null);
@@ -71,12 +71,13 @@ export default function Home() {
   useEffect(() => {
     let isMounted = true;
 
-    fetchDailySetsFromSupabase().then((supabaseDailySets) => {
+    fetchDailySetsFromAppwrite().then((appwriteDailySets) => {
       if (!isMounted) {
         return;
       }
 
-      const nextDailySets = supabaseDailySets?.length ? supabaseDailySets : dailySets;
+      const nextDailySets = appwriteDailySets ?? [];
+      setHasDataError(appwriteDailySets === null);
       setAvailableDailySets(nextDailySets);
       setSelectedDate(nextDailySets[0]?.runDate ?? "");
       setActiveIndex(0);
@@ -167,34 +168,6 @@ export default function Home() {
     const scrollTop = window.scrollY;
     setActiveIndex(index);
     requestAnimationFrame(() => window.scrollTo({ top: scrollTop }));
-  }
-
-  function setMemoryCollection(memoryId: string, isCollected: boolean) {
-    setAvailableDailySets((currentDailySets) =>
-      currentDailySets.map((dailySet) => ({
-        ...dailySet,
-        memories: dailySet.memories.map((memory) =>
-          memory.id === memoryId ? { ...memory, isCollected } : memory
-        )
-      }))
-    );
-  }
-
-  async function toggleCollection() {
-    if (!activeMemory || collectionUpdateId) {
-      return;
-    }
-
-    const nextIsCollected = !activeMemory.isCollected;
-    setCollectionUpdateId(activeMemory.id);
-    setMemoryCollection(activeMemory.id, nextIsCollected);
-
-    const didUpdate = await updateMemoryCollection(activeMemory.id, nextIsCollected);
-    if (!didUpdate && hasSupabaseConfig) {
-      setMemoryCollection(activeMemory.id, !nextIsCollected);
-    }
-
-    setCollectionUpdateId(null);
   }
 
   function showPrevious() {
@@ -375,7 +348,7 @@ export default function Home() {
       <main className="grid min-h-screen place-items-center px-6 text-center">
         <div>
           <h1 className="font-serif text-5xl text-slate-100">Afterglow</h1>
-          <p className="mt-4 text-mist">Afterglow has not been generated yet.</p>
+          <p className="mt-4 text-mist">{hasDataError ? "Unable to load artworks. Please try again later." : "Afterglow has not been generated yet."}</p>
         </div>
       </main>
     );
@@ -532,18 +505,6 @@ export default function Home() {
               <h2 className="memory-title mt-4 text-balance text-slate-100">
                 {activeMemory.newsTitle}
               </h2>
-              <button
-                className={`mt-5 border px-4 py-2 font-mono text-[0.68rem] uppercase tracking-[0.14em] transition ${
-                  activeMemory.isCollected
-                    ? "border-ember/60 bg-ember/10 text-slate-100"
-                    : "border-white/10 bg-white/[0.03] text-dim hover:border-ember/40 hover:text-mist"
-                } disabled:cursor-wait disabled:opacity-60`}
-                type="button"
-                disabled={collectionUpdateId === activeMemory.id}
-                onClick={toggleCollection}
-              >
-                Collection
-              </button>
             </div>
 
             <div className="max-w-[43rem] lg:pt-1">
