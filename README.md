@@ -1,5 +1,11 @@
 # Afterglow
 
+> Migration note: the website now reads published artwork from Appwrite TablesDB
+> (`afterglow` / `visual_memory`) and images from Appwrite Storage
+> (`afterglow-images`). The Supabase, Vercel, and OpenClaw pipeline instructions
+> below describe the previous deployment and have not yet been migrated. The
+> Collection control is temporarily unavailable.
+
 What remains after the world is seen.
 
 Afterglow is a quiet visual diary for AI-generated daily news memories. The public page shows one day at a time, with three visual memories per date and simple navigation across images and dates.
